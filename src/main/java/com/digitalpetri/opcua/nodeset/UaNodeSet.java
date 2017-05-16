@@ -110,6 +110,10 @@ public class UaNodeSet {
         });
     }
 
+    public UANodeSet getNodeSet() {
+        return nodeSet;
+    }
+
     public Map<String, NodeId> getAliasMap() {
         return aliasMap;
     }
