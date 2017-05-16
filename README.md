@@ -1,7 +1,7 @@
 UANodeSet Parser
 ================
 
-A parser and node-generator for the OPC-UA UANodeSet XML schema.
+A parser for the OPC-UA UANodeSet XML schema.
 
 ### From Maven
 ```xml
