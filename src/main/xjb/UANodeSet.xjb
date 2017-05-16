@@ -1,0 +1,43 @@
+<!--
+  ~ Halcyon OPC-UA Server
+  ~
+  ~ Copyright (C) 2014 Kevin Herron
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Affero General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Affero General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<jxb:bindings version="1.0"
+              xmlns:jxb="http://java.sun.com/xml/ns/jaxb"
+              xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+              xmlns:opc="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+
+    <jxb:bindings schemaLocation="../resources/UANodeSet.xsd" node="/xs:schema">
+        <jxb:schemaBindings>
+            <jxb:nameXmlTransform>
+                <jxb:typeName prefix="Generated"/>
+                <jxb:anonymousTypeName prefix="Generated"/>
+            </jxb:nameXmlTransform>
+        </jxb:schemaBindings>
+
+        <!--<jxb:globalBindings underscoreBinding="asWordSeparator">-->
+            <!--<jxb:serializable uid="1"/>-->
+            <!--<xjc:javaType adapter="com.digitalpetri.opcua.nodeset.NodeIdAdapter"-->
+                          <!--name="org.eclipse.milo.opcua.stack.core.types.builtin.NodeId"-->
+                          <!--xmlType="opc:NodeId"/>-->
+        <!--</jxb:globalBindings>-->
+    </jxb:bindings>
+
+
+</jxb:bindings>
