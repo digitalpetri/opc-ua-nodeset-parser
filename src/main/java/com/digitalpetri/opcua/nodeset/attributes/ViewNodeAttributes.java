@@ -6,7 +6,7 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.QualifiedName;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UByte;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.NodeClass;
-import org.opcfoundation.ua.generated.GeneratedUAView;
+import org.opcfoundation.ua.generated.UAView;
 
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.ubyte;
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
@@ -48,7 +48,7 @@ public class ViewNodeAttributes extends NodeAttributes {
             "} " + super.toString();
     }
 
-    public static ViewNodeAttributes fromGenerated(GeneratedUAView gNode) {
+    public static ViewNodeAttributes fromGenerated(UAView gNode) {
         NodeId nodeId = NodeId.parse(gNode.getNodeId());
         QualifiedName browseName = QualifiedName.parse(gNode.getBrowseName());
 

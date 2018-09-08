@@ -9,16 +9,22 @@ import java.util.Optional;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.eclipse.milo.opcua.stack.core.Identifiers;
-import org.eclipse.milo.opcua.stack.core.serialization.xml.XmlDecoder;
+import org.eclipse.milo.opcua.stack.core.serialization.OpcUaXmlStreamDecoder;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
-import org.opcfoundation.ua.generated.GeneratedReference;
+import org.opcfoundation.ua.generated.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Node;
 
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
 
@@ -50,7 +56,7 @@ public class AttributeUtil {
         }
     }
 
-    public static NodeId parseReferenceTypeId(GeneratedReference gReference, Map<String, NodeId> aliases) {
+    public static NodeId parseReferenceTypeId(Reference gReference, Map<String, NodeId> aliases) {
         String referenceType = gReference.getReferenceType();
 
         try {
@@ -77,21 +83,34 @@ public class AttributeUtil {
     }
 
     public static DataValue parseValue(Object value, Marshaller marshaller) {
-        JAXBElement<?> jaxbElement = JAXBElement.class.cast(value);
-
         StringWriter sw = new StringWriter();
 
-        try {
-            marshaller.marshal(jaxbElement, sw);
-        } catch (JAXBException e) {
-            LOGGER.warn("unable to marshal JAXB element: " + jaxbElement, e);
-            return new DataValue(Variant.NULL_VALUE);
+        if (value instanceof JAXBElement) {
+            JAXBElement<?> jaxbElement = JAXBElement.class.cast(value);
+
+            try {
+                marshaller.marshal(jaxbElement, sw);
+            } catch (JAXBException e) {
+                LOGGER.warn("unable to marshal JAXB element: " + jaxbElement, e);
+                return new DataValue(Variant.NULL_VALUE);
+            }
+        } else if (value instanceof Node) {
+            Node node = Node.class.cast(value);
+
+            try {
+                Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                transformer.setOutputProperty("omit-xml-declaration", "yes");
+                transformer.transform(new DOMSource(node), new StreamResult(sw));
+            } catch (TransformerException e) {
+                LOGGER.warn("unable to transform dom node: " + node, e);
+                return new DataValue(Variant.NULL_VALUE);
+            }
         }
 
         String xmlString = sw.toString();
         try {
-            XmlDecoder xmlDecoder = new XmlDecoder(new StringReader(xmlString));
-            Object valueObject = xmlDecoder.decodeVariantValue();
+            OpcUaXmlStreamDecoder xmlReader = new OpcUaXmlStreamDecoder(new StringReader(xmlString));
+            Object valueObject = xmlReader.readVariantValue();
 
             return new DataValue(new Variant(valueObject));
         } catch (Throwable t) {

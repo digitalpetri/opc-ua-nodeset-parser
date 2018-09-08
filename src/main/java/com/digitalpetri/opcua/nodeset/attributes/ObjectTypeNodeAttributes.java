@@ -5,7 +5,7 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.eclipse.milo.opcua.stack.core.types.builtin.QualifiedName;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.NodeClass;
-import org.opcfoundation.ua.generated.GeneratedUAObjectType;
+import org.opcfoundation.ua.generated.UAObjectType;
 
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
 
@@ -38,7 +38,7 @@ public class ObjectTypeNodeAttributes extends NodeAttributes {
             "} " + super.toString();
     }
 
-    public static ObjectTypeNodeAttributes fromGenerated(GeneratedUAObjectType gNode) {
+    public static ObjectTypeNodeAttributes fromGenerated(UAObjectType gNode) {
         NodeId nodeId = NodeId.parse(gNode.getNodeId());
         QualifiedName browseName = QualifiedName.parse(gNode.getBrowseName());
 

@@ -13,7 +13,7 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UByte;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.NodeClass;
-import org.opcfoundation.ua.generated.GeneratedUAVariable;
+import org.opcfoundation.ua.generated.UAVariable;
 
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.ubyte;
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
@@ -104,7 +104,7 @@ public class VariableNodeAttributes extends NodeAttributes {
     }
 
     public static VariableNodeAttributes fromGenerated(
-        GeneratedUAVariable gNode,
+        UAVariable gNode,
         Marshaller marshaller,
         Map<String, NodeId> aliasMap) {
 
@@ -151,7 +151,7 @@ public class VariableNodeAttributes extends NodeAttributes {
         );
     }
 
-    private static DataValue value(GeneratedUAVariable.GeneratedValue gValue, Marshaller marshaller) {
+    private static DataValue value(UAVariable.Value gValue, Marshaller marshaller) {
         if (gValue == null) return new DataValue(Variant.NULL_VALUE);
 
         return AttributeUtil.parseValue(gValue.getAny(), marshaller);

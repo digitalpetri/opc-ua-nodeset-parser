@@ -1,7 +1,6 @@
 package com.digitalpetri.opcua.nodeset;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,50 +18,69 @@ import com.digitalpetri.opcua.nodeset.attributes.VariableNodeAttributes;
 import com.digitalpetri.opcua.nodeset.attributes.VariableTypeNodeAttributes;
 import com.digitalpetri.opcua.nodeset.attributes.ViewNodeAttributes;
 import com.digitalpetri.opcua.nodeset.util.AttributeUtil;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.SetMultimap;
+import org.eclipse.milo.opcua.stack.core.NamespaceTable;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
-import org.opcfoundation.ua.generated.GeneratedReference;
-import org.opcfoundation.ua.generated.GeneratedUADataType;
-import org.opcfoundation.ua.generated.GeneratedUAMethod;
-import org.opcfoundation.ua.generated.GeneratedUAObject;
-import org.opcfoundation.ua.generated.GeneratedUAObjectType;
-import org.opcfoundation.ua.generated.GeneratedUAReferenceType;
-import org.opcfoundation.ua.generated.GeneratedUAVariable;
-import org.opcfoundation.ua.generated.GeneratedUAVariableType;
-import org.opcfoundation.ua.generated.GeneratedUAView;
+import org.jooq.lambda.tuple.Tuple;
+import org.jooq.lambda.tuple.Tuple2;
+import org.opcfoundation.ua.generated.AliasTable;
+import org.opcfoundation.ua.generated.NodeIdAlias;
 import org.opcfoundation.ua.generated.ObjectFactory;
+import org.opcfoundation.ua.generated.Reference;
+import org.opcfoundation.ua.generated.UADataType;
+import org.opcfoundation.ua.generated.UAMethod;
 import org.opcfoundation.ua.generated.UANodeSet;
+import org.opcfoundation.ua.generated.UAObject;
+import org.opcfoundation.ua.generated.UAObjectType;
+import org.opcfoundation.ua.generated.UAReferenceType;
+import org.opcfoundation.ua.generated.UAVariable;
+import org.opcfoundation.ua.generated.UAVariableType;
+import org.opcfoundation.ua.generated.UAView;
 
 public class UaNodeSet {
 
     private static final String OPC_UA_NAMESPACE = "http://opcfoundation.org/UA/";
 
-    private final Map<String, NodeId> aliasMap = new HashMap<>();
-    private final List<String> namespaceUris = new ArrayList<>();
+    private final Map<NodeId, NodeAttributes> nodeAttributes;
+    private final SetMultimap<NodeId, ReferenceDetails> referenceDetails;
+    private final NamespaceTable namespaceTable;
+    private final Map<String, NodeId> aliasMap;
 
-    private final Map<NodeId, NodeAttributes> nodeAttributes = new HashMap<>();
-    private final ListMultimap<NodeId, ReferenceDetails> referenceDetails = ArrayListMultimap.create();
+    public UaNodeSet(
+        Map<NodeId, NodeAttributes> nodeAttributes,
+        SetMultimap<NodeId, ReferenceDetails> referenceDetails,
+        NamespaceTable namespaceTable,
+        Map<String, NodeId> aliasMap) {
 
-    private final Marshaller marshaller;
-
-    private final UANodeSet nodeSet;
+        this.nodeAttributes = nodeAttributes;
+        this.referenceDetails = referenceDetails;
+        this.namespaceTable = namespaceTable;
+        this.aliasMap = aliasMap;
+    }
 
     UaNodeSet(UANodeSet nodeSet) throws JAXBException {
-        this.nodeSet = nodeSet;
+        aliasMap = new HashMap<>();
+        namespaceTable = new NamespaceTable();
+        referenceDetails = LinkedHashMultimap.create();
+        nodeAttributes = new HashMap<>();
 
         JAXBContext jaxbContext = JAXBContext.newInstance(ObjectFactory.class);
-        marshaller = jaxbContext.createMarshaller();
+        Marshaller marshaller = jaxbContext.createMarshaller();
 
         // Alias Map
-        nodeSet.getAliases().getAlias().forEach(
-            a -> aliasMap.put(a.getAlias(), NodeId.parse(a.getValue()))
-        );
+        AliasTable aliasTable = nodeSet.getAliases();
+        if (aliasTable != null) {
+            List<NodeIdAlias> aliases = aliasTable.getAlias();
+            if (aliases != null) {
+                aliases.forEach(a -> aliasMap.put(a.getAlias(), NodeId.parse(a.getValue())));
+            }
+        }
 
         // Namespace URI List
-        namespaceUris.add(OPC_UA_NAMESPACE);
         if (nodeSet.getNamespaceUris() != null) {
-            namespaceUris.addAll(nodeSet.getNamespaceUris().getUri());
+            List<String> uris = nodeSet.getNamespaceUris().getUri();
+            uris.forEach(namespaceTable::addUri);
         }
 
         // Reference Details
@@ -70,7 +88,12 @@ public class UaNodeSet {
             NodeId sourceNodeId = NodeId.parse(gNode.getNodeId());
 
             gNode.getReferences().getReference().forEach(gReference -> {
-                referenceDetails.put(sourceNodeId, referenceDetails(sourceNodeId, gReference));
+                Tuple2<ReferenceDetails, ReferenceDetails> refs = referenceDetails(sourceNodeId, gReference);
+                ReferenceDetails forward = refs.v1();
+                ReferenceDetails inverse = refs.v2();
+
+                referenceDetails.put(forward.getSourceNodeId(), forward);
+                referenceDetails.put(inverse.getSourceNodeId(), inverse);
             });
         });
 
@@ -78,30 +101,22 @@ public class UaNodeSet {
         nodeSet.getUAObjectOrUAVariableOrUAMethod().forEach(gNode -> {
             NodeAttributes attributes = null;
 
-            if (gNode instanceof GeneratedUADataType) {
-                attributes = DataTypeNodeAttributes
-                    .fromGenerated((GeneratedUADataType) gNode);
-            } else if (gNode instanceof GeneratedUAMethod) {
-                attributes = MethodNodeAttributes
-                    .fromGenerated((GeneratedUAMethod) gNode);
-            } else if (gNode instanceof GeneratedUAObject) {
-                attributes = ObjectNodeAttributes
-                    .fromGenerated((GeneratedUAObject) gNode);
-            } else if (gNode instanceof GeneratedUAObjectType) {
-                attributes = ObjectTypeNodeAttributes
-                    .fromGenerated((GeneratedUAObjectType) gNode);
-            } else if (gNode instanceof GeneratedUAReferenceType) {
-                attributes = ReferenceTypeNodeAttributes
-                    .fromGenerated((GeneratedUAReferenceType) gNode);
-            } else if (gNode instanceof GeneratedUAVariable) {
-                attributes = VariableNodeAttributes
-                    .fromGenerated((GeneratedUAVariable) gNode, marshaller, aliasMap);
-            } else if (gNode instanceof GeneratedUAVariableType) {
-                attributes = VariableTypeNodeAttributes
-                    .fromGenerated((GeneratedUAVariableType) gNode, marshaller, aliasMap);
-            } else if (gNode instanceof GeneratedUAView) {
-                attributes = ViewNodeAttributes
-                    .fromGenerated((GeneratedUAView) gNode);
+            if (gNode instanceof UADataType) {
+                attributes = DataTypeNodeAttributes.fromGenerated((UADataType) gNode);
+            } else if (gNode instanceof UAMethod) {
+                attributes = MethodNodeAttributes.fromGenerated((UAMethod) gNode);
+            } else if (gNode instanceof UAObject) {
+                attributes = ObjectNodeAttributes.fromGenerated((UAObject) gNode);
+            } else if (gNode instanceof UAObjectType) {
+                attributes = ObjectTypeNodeAttributes.fromGenerated((UAObjectType) gNode);
+            } else if (gNode instanceof UAReferenceType) {
+                attributes = ReferenceTypeNodeAttributes.fromGenerated((UAReferenceType) gNode);
+            } else if (gNode instanceof UAVariable) {
+                attributes = VariableNodeAttributes.fromGenerated((UAVariable) gNode, marshaller, aliasMap);
+            } else if (gNode instanceof UAVariableType) {
+                attributes = VariableTypeNodeAttributes.fromGenerated((UAVariableType) gNode, marshaller, aliasMap);
+            } else if (gNode instanceof UAView) {
+                attributes = ViewNodeAttributes.fromGenerated((UAView) gNode);
             }
 
             if (attributes != null) {
@@ -110,37 +125,42 @@ public class UaNodeSet {
         });
     }
 
-    public UANodeSet getNodeSet() {
-        return nodeSet;
-    }
-
     public Map<String, NodeId> getAliasMap() {
         return aliasMap;
     }
 
-    public List<String> getNamespaceUris() {
-        return namespaceUris;
+    public NamespaceTable getNamespaceTable() {
+        return namespaceTable;
     }
 
     public Map<NodeId, NodeAttributes> getNodeAttributes() {
         return nodeAttributes;
     }
 
-    public ListMultimap<NodeId, ReferenceDetails> getReferenceDetails() {
+    public SetMultimap<NodeId, ReferenceDetails> getReferenceDetails() {
         return referenceDetails;
     }
 
-    private ReferenceDetails referenceDetails(NodeId sourceNodeId, GeneratedReference gReference) {
+    private Tuple2<ReferenceDetails, ReferenceDetails> referenceDetails(NodeId sourceNodeId, Reference gReference) {
         NodeId targetNodeId = NodeId.parse(gReference.getValue());
         NodeId referenceTypeId = AttributeUtil.parseReferenceTypeId(gReference, aliasMap);
-        boolean forward = gReference.isIsForward();
+        boolean isForward = gReference.isIsForward();
 
-        return new ReferenceDetails(
+        ReferenceDetails forward = new ReferenceDetails(
             sourceNodeId,
             targetNodeId,
             referenceTypeId,
-            forward
+            isForward
         );
+
+        ReferenceDetails inverse = new ReferenceDetails(
+            targetNodeId,
+            sourceNodeId,
+            referenceTypeId,
+            !isForward
+        );
+
+        return Tuple.tuple(forward, inverse);
     }
 
     public static UaNodeSet parse(InputStream nodeSetXml) throws JAXBException {

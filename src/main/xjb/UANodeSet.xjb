@@ -24,18 +24,18 @@
               xmlns:opc="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
 
     <jxb:bindings schemaLocation="../resources/UANodeSet.xsd" node="/xs:schema">
-        <jxb:schemaBindings>
-            <jxb:nameXmlTransform>
-                <jxb:typeName prefix="Generated"/>
-                <jxb:anonymousTypeName prefix="Generated"/>
-            </jxb:nameXmlTransform>
-        </jxb:schemaBindings>
+        <!--<jxb:schemaBindings>-->
+        <!--<jxb:nameXmlTransform>-->
+        <!--<jxb:typeName prefix="Generated"/>-->
+        <!--<jxb:anonymousTypeName prefix="Generated"/>-->
+        <!--</jxb:nameXmlTransform>-->
+        <!--</jxb:schemaBindings>-->
 
         <!--<jxb:globalBindings underscoreBinding="asWordSeparator">-->
             <!--<jxb:serializable uid="1"/>-->
-            <!--<xjc:javaType adapter="com.digitalpetri.opcua.nodeset.NodeIdAdapter"-->
-                          <!--name="org.eclipse.milo.opcua.stack.core.types.builtin.NodeId"-->
-                          <!--xmlType="opc:NodeId"/>-->
+            <!--<xjc:javaType adapter="com.digitalpetri.opcua.nodeset.adapters.UaObjectNodeAdapter"-->
+                          <!--name="org.eclipse.milo.opcua.sdk.server.nodes.UaObjectNode"-->
+                          <!--xmlType="opc:UAObject"/>-->
         <!--</jxb:globalBindings>-->
     </jxb:bindings>
 
