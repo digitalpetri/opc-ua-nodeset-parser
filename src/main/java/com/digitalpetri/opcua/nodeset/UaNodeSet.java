@@ -25,6 +25,7 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.jooq.lambda.tuple.Tuple;
 import org.jooq.lambda.tuple.Tuple2;
 import org.opcfoundation.ua.generated.AliasTable;
+import org.opcfoundation.ua.generated.DataTypeDefinition;
 import org.opcfoundation.ua.generated.NodeIdAlias;
 import org.opcfoundation.ua.generated.ObjectFactory;
 import org.opcfoundation.ua.generated.Reference;
@@ -46,17 +47,20 @@ public class UaNodeSet {
     private final SetMultimap<NodeId, ReferenceDetails> referenceDetails;
     private final NamespaceTable namespaceTable;
     private final Map<String, NodeId> aliasMap;
+    private final Map<NodeId, DataTypeDefinition> dataTypeDefinitions;
 
     public UaNodeSet(
         Map<NodeId, NodeAttributes> nodeAttributes,
         SetMultimap<NodeId, ReferenceDetails> referenceDetails,
         NamespaceTable namespaceTable,
-        Map<String, NodeId> aliasMap) {
+        Map<String, NodeId> aliasMap,
+        Map<NodeId, DataTypeDefinition> dataTypeDefinitions) {
 
         this.nodeAttributes = nodeAttributes;
         this.referenceDetails = referenceDetails;
         this.namespaceTable = namespaceTable;
         this.aliasMap = aliasMap;
+        this.dataTypeDefinitions = dataTypeDefinitions;
     }
 
     UaNodeSet(UANodeSet nodeSet) throws JAXBException {
@@ -64,6 +68,7 @@ public class UaNodeSet {
         namespaceTable = new NamespaceTable();
         referenceDetails = LinkedHashMultimap.create();
         nodeAttributes = new HashMap<>();
+        dataTypeDefinitions = new HashMap<>();
 
         JAXBContext jaxbContext = JAXBContext.newInstance(ObjectFactory.class);
         Marshaller marshaller = jaxbContext.createMarshaller();
@@ -102,7 +107,13 @@ public class UaNodeSet {
             NodeAttributes attributes = null;
 
             if (gNode instanceof UADataType) {
-                attributes = DataTypeNodeAttributes.fromGenerated((UADataType) gNode);
+                UADataType gDataTypeNode = (UADataType) gNode;
+
+                attributes = DataTypeNodeAttributes.fromGenerated(gDataTypeNode);
+
+                DataTypeDefinition definition = gDataTypeNode.getDefinition();
+
+                dataTypeDefinitions.put(attributes.getNodeId(), definition);
             } else if (gNode instanceof UAMethod) {
                 attributes = MethodNodeAttributes.fromGenerated((UAMethod) gNode);
             } else if (gNode instanceof UAObject) {
@@ -141,6 +152,10 @@ public class UaNodeSet {
         return referenceDetails;
     }
 
+    public Map<NodeId, DataTypeDefinition> getDataTypeDefinitions() {
+        return dataTypeDefinitions;
+    }
+
     private Tuple2<ReferenceDetails, ReferenceDetails> referenceDetails(NodeId sourceNodeId, Reference gReference) {
         NodeId targetNodeId = NodeId.parse(gReference.getValue());
         NodeId referenceTypeId = AttributeUtil.parseReferenceTypeId(gReference, aliasMap);
@@ -166,7 +181,7 @@ public class UaNodeSet {
     public static UaNodeSet parse(InputStream nodeSetXml) throws JAXBException {
         JAXBContext jaxbContext = JAXBContext.newInstance(ObjectFactory.class);
 
-        UANodeSet nodeSet = UANodeSet.class.cast(jaxbContext.createUnmarshaller().unmarshal(nodeSetXml));
+        UANodeSet nodeSet = (UANodeSet) jaxbContext.createUnmarshaller().unmarshal(nodeSetXml);
 
         return new UaNodeSet(nodeSet);
     }
