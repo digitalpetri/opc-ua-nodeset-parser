@@ -18,12 +18,10 @@ import com.digitalpetri.opcua.nodeset.attributes.VariableNodeAttributes;
 import com.digitalpetri.opcua.nodeset.attributes.VariableTypeNodeAttributes;
 import com.digitalpetri.opcua.nodeset.attributes.ViewNodeAttributes;
 import com.digitalpetri.opcua.nodeset.util.AttributeUtil;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.SetMultimap;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import org.eclipse.milo.opcua.stack.core.NamespaceTable;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
-import org.jooq.lambda.tuple.Tuple;
-import org.jooq.lambda.tuple.Tuple2;
 import org.opcfoundation.ua.generated.AliasTable;
 import org.opcfoundation.ua.generated.DataTypeDefinition;
 import org.opcfoundation.ua.generated.NodeIdAlias;
@@ -44,14 +42,14 @@ public class UaNodeSet {
     private static final String OPC_UA_NAMESPACE = "http://opcfoundation.org/UA/";
 
     private final Map<NodeId, NodeAttributes> nodeAttributes;
-    private final SetMultimap<NodeId, ReferenceDetails> referenceDetails;
+    private final ListMultimap<NodeId, ReferenceDetails> referenceDetails;
     private final NamespaceTable namespaceTable;
     private final Map<String, NodeId> aliasMap;
     private final Map<NodeId, DataTypeDefinition> dataTypeDefinitions;
 
     public UaNodeSet(
         Map<NodeId, NodeAttributes> nodeAttributes,
-        SetMultimap<NodeId, ReferenceDetails> referenceDetails,
+        ListMultimap<NodeId, ReferenceDetails> referenceDetails,
         NamespaceTable namespaceTable,
         Map<String, NodeId> aliasMap,
         Map<NodeId, DataTypeDefinition> dataTypeDefinitions) {
@@ -66,7 +64,7 @@ public class UaNodeSet {
     UaNodeSet(UANodeSet nodeSet) throws JAXBException {
         aliasMap = new HashMap<>();
         namespaceTable = new NamespaceTable();
-        referenceDetails = LinkedHashMultimap.create();
+        referenceDetails = ArrayListMultimap.create();
         nodeAttributes = new HashMap<>();
         dataTypeDefinitions = new HashMap<>();
 
@@ -92,14 +90,10 @@ public class UaNodeSet {
         nodeSet.getUAObjectOrUAVariableOrUAMethod().forEach(gNode -> {
             NodeId sourceNodeId = NodeId.parse(gNode.getNodeId());
 
-            gNode.getReferences().getReference().forEach(gReference -> {
-                Tuple2<ReferenceDetails, ReferenceDetails> refs = referenceDetails(sourceNodeId, gReference);
-                ReferenceDetails forward = refs.v1();
-                ReferenceDetails inverse = refs.v2();
-
-                referenceDetails.put(forward.getSourceNodeId(), forward);
-                referenceDetails.put(inverse.getSourceNodeId(), inverse);
-            });
+            gNode.getReferences().getReference().forEach(
+                gReference ->
+                    referenceDetails.put(sourceNodeId, referenceDetails(sourceNodeId, gReference))
+            );
         });
 
         // Node Attributes
@@ -148,7 +142,7 @@ public class UaNodeSet {
         return nodeAttributes;
     }
 
-    public SetMultimap<NodeId, ReferenceDetails> getReferenceDetails() {
+    public ListMultimap<NodeId, ReferenceDetails> getReferenceDetails() {
         return referenceDetails;
     }
 
@@ -156,26 +150,17 @@ public class UaNodeSet {
         return dataTypeDefinitions;
     }
 
-    private Tuple2<ReferenceDetails, ReferenceDetails> referenceDetails(NodeId sourceNodeId, Reference gReference) {
+    private ReferenceDetails referenceDetails(NodeId sourceNodeId, Reference gReference) {
         NodeId targetNodeId = NodeId.parse(gReference.getValue());
         NodeId referenceTypeId = AttributeUtil.parseReferenceTypeId(gReference, aliasMap);
         boolean isForward = gReference.isIsForward();
 
-        ReferenceDetails forward = new ReferenceDetails(
+        return new ReferenceDetails(
             sourceNodeId,
             targetNodeId,
             referenceTypeId,
             isForward
         );
-
-        ReferenceDetails inverse = new ReferenceDetails(
-            targetNodeId,
-            sourceNodeId,
-            referenceTypeId,
-            !isForward
-        );
-
-        return Tuple.tuple(forward, inverse);
     }
 
     public static UaNodeSet parse(InputStream nodeSetXml) throws JAXBException {
