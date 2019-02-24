@@ -42,14 +42,14 @@ public class UaNodeSet {
     private static final String OPC_UA_NAMESPACE = "http://opcfoundation.org/UA/";
 
     private final Map<NodeId, NodeAttributes> nodeAttributes;
-    private final ListMultimap<NodeId, ReferenceDetails> referenceDetails;
+    private final ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> referenceDetails;
     private final NamespaceTable namespaceTable;
     private final Map<String, NodeId> aliasMap;
     private final Map<NodeId, DataTypeDefinition> dataTypeDefinitions;
 
     public UaNodeSet(
         Map<NodeId, NodeAttributes> nodeAttributes,
-        ListMultimap<NodeId, ReferenceDetails> referenceDetails,
+        ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> referenceDetails,
         NamespaceTable namespaceTable,
         Map<String, NodeId> aliasMap,
         Map<NodeId, DataTypeDefinition> dataTypeDefinitions) {
@@ -92,7 +92,7 @@ public class UaNodeSet {
 
             gNode.getReferences().getReference().forEach(
                 gReference ->
-                    referenceDetails.put(sourceNodeId, referenceDetails(sourceNodeId, gReference))
+                    referenceDetails.put(sourceNodeId, reference(sourceNodeId, gReference))
             );
         });
 
@@ -142,7 +142,7 @@ public class UaNodeSet {
         return nodeAttributes;
     }
 
-    public ListMultimap<NodeId, ReferenceDetails> getReferenceDetails() {
+    public ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> getReferenceDetails() {
         return referenceDetails;
     }
 
@@ -150,15 +150,15 @@ public class UaNodeSet {
         return dataTypeDefinitions;
     }
 
-    private ReferenceDetails referenceDetails(NodeId sourceNodeId, Reference gReference) {
+    private org.eclipse.milo.opcua.sdk.core.Reference reference(NodeId sourceNodeId, Reference gReference) {
         NodeId targetNodeId = NodeId.parse(gReference.getValue());
         NodeId referenceTypeId = AttributeUtil.parseReferenceTypeId(gReference, aliasMap);
         boolean isForward = gReference.isIsForward();
 
-        return new ReferenceDetails(
+        return new org.eclipse.milo.opcua.sdk.core.Reference(
             sourceNodeId,
-            targetNodeId,
             referenceTypeId,
+            targetNodeId.expanded(),
             isForward
         );
     }
