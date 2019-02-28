@@ -91,8 +91,16 @@ public class UaNodeSet {
             NodeId sourceNodeId = NodeId.parse(gNode.getNodeId());
 
             gNode.getReferences().getReference().forEach(
-                gReference ->
-                    referenceDetails.put(sourceNodeId, reference(sourceNodeId, gReference))
+                gReference -> {
+                    org.eclipse.milo.opcua.sdk.core.Reference reference = reference(sourceNodeId, gReference);
+                    referenceDetails.put(sourceNodeId, reference);
+
+                    reference.invert().ifPresent(
+                        inverse ->
+                            referenceDetails.put(inverse.getSourceNodeId(), inverse)
+                    );
+
+                }
             );
         });
 
