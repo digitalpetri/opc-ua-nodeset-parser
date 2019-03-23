@@ -16,13 +16,15 @@ public abstract class NodeAttributes {
     private final UInteger writeMask;
     private final UInteger userWriteMask;
 
-    public NodeAttributes(NodeId nodeId,
-                          NodeClass nodeClass,
-                          QualifiedName browseName,
-                          LocalizedText displayName,
-                          LocalizedText description,
-                          UInteger writeMask,
-                          UInteger userWriteMask) {
+    public NodeAttributes(
+        NodeId nodeId,
+        NodeClass nodeClass,
+        QualifiedName browseName,
+        LocalizedText displayName,
+        LocalizedText description,
+        UInteger writeMask,
+        UInteger userWriteMask
+    ) {
 
         this.nodeId = nodeId;
         this.nodeClass = nodeClass;

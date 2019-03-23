@@ -24,7 +24,8 @@ public class ViewNodeAttributes extends NodeAttributes {
         UInteger writeMask,
         UInteger userWriteMask,
         boolean containsNoLoops,
-        UByte eventNotifier) {
+        UByte eventNotifier
+    ) {
 
         super(nodeId, NodeClass.View, browseName, displayName, description, writeMask, userWriteMask);
 

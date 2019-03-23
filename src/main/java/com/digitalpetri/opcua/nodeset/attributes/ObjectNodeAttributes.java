@@ -22,7 +22,8 @@ public class ObjectNodeAttributes extends NodeAttributes {
         LocalizedText description,
         UInteger writeMask,
         UInteger userWriteMask,
-        UByte eventNotifier) {
+        UByte eventNotifier
+    ) {
 
         super(nodeId, NodeClass.Object, browseName, displayName, description, writeMask, userWriteMask);
 

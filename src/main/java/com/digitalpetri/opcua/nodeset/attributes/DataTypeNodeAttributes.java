@@ -20,7 +20,8 @@ public class DataTypeNodeAttributes extends NodeAttributes {
         LocalizedText description,
         UInteger writeMask,
         UInteger userWriteMask,
-        boolean isAbstract) {
+        boolean isAbstract
+    ) {
 
         super(nodeId, NodeClass.DataType, browseName, displayName, description, writeMask, userWriteMask);
 

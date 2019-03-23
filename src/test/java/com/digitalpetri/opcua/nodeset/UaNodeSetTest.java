@@ -87,7 +87,7 @@ public class UaNodeSetTest {
 
         UaNodeSet nodeSet = UaNodeSet.parse(nodeSetXml);
 
-        System.out.println("Parsed " + nodeSetFilename + " and generated " + nodeSet.getNodeAttributes().size() + " nodes.");
+        System.out.println("Parsed " + nodeSetFilename + " and generated " + nodeSet.getNodes().size() + " nodes.");
     }
 
 }

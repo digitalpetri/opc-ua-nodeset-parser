@@ -43,7 +43,8 @@ public class VariableNodeAttributes extends NodeAttributes {
         UByte accessLevel,
         UByte userAccessLevel,
         Double minimumSamplingInterval,
-        boolean historizing) {
+        boolean historizing
+    ) {
 
         super(nodeId, NodeClass.Variable, browseName, displayName, description, writeMask, userWriteMask);
 

@@ -24,7 +24,8 @@ public class ReferenceTypeNodeAttributes extends NodeAttributes {
         UInteger userWriteMask,
         boolean isAbstract,
         boolean symmetric,
-        LocalizedText inverseName) {
+        LocalizedText inverseName
+    ) {
 
         super(nodeId, NodeClass.ReferenceType, browseName, displayName, description, writeMask, userWriteMask);
 

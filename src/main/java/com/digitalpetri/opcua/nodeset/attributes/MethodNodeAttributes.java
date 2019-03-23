@@ -22,7 +22,8 @@ public class MethodNodeAttributes extends NodeAttributes {
         UInteger writeMask,
         UInteger userWriteMask,
         boolean executable,
-        boolean userExecutable) {
+        boolean userExecutable
+    ) {
 
         super(nodeId, NodeClass.Method, browseName, displayName, description, writeMask, userWriteMask);
 

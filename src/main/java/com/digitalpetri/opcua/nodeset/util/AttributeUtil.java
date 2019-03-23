@@ -32,61 +32,43 @@ public class AttributeUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AttributeUtil.class);
 
-    public static NodeId parseDataType(String dataTypeString, Map<String, NodeId> aliases) {
-        try {
-            return NodeId.parse(dataTypeString);
-        } catch (Throwable t) {
-            if (aliases.containsKey(dataTypeString)) {
-                return aliases.get(dataTypeString);
-            } else {
-                // Ok, last effort...
-                Optional<NodeId> nodeId = Arrays.stream(Identifiers.class.getFields())
-                    .filter(field -> field.getName().equals(dataTypeString))
-                    .findFirst()
-                    .map(field -> {
-                        try {
-                            return (NodeId) field.get(null);
-                        } catch (Throwable ex) {
-                            throw new RuntimeException("Couldn't get ReferenceTypeId for " + dataTypeString, ex);
-                        }
-                    });
-
-                return nodeId.orElseThrow(RuntimeException::new);
-            }
-        }
+    public static NodeId parseDataType(String dataType, Map<String, NodeId> aliases) {
+        return tryParseNodeId(aliases, dataType);
     }
 
     public static NodeId parseReferenceTypeId(Reference gReference, Map<String, NodeId> aliases) {
         String referenceType = gReference.getReferenceType();
 
-        try {
-            return NodeId.parse(referenceType);
-        } catch (Throwable t) {
-            if (aliases.containsKey(referenceType)) {
-                return aliases.get(referenceType);
+        return tryParseNodeId(aliases, referenceType);
+    }
+
+    private static NodeId tryParseNodeId(Map<String, NodeId> aliases, String id) {
+        return NodeId.parseSafe(id).orElseGet(() -> {
+            if (aliases.containsKey(id)) {
+                return aliases.get(id);
             } else {
                 // Ok, last effort...
                 Optional<NodeId> nodeId = Arrays.stream(Identifiers.class.getFields())
-                    .filter(field -> field.getName().equals(referenceType))
+                    .filter(field -> field.getName().equals(id))
                     .findFirst()
                     .map(field -> {
                         try {
                             return (NodeId) field.get(null);
                         } catch (Throwable ex) {
-                            throw new RuntimeException("Couldn't get ReferenceTypeId for " + referenceType, ex);
+                            throw new RuntimeException("Couldn't get NodeId field: " + id, ex);
                         }
                     });
 
                 return nodeId.orElseThrow(RuntimeException::new);
             }
-        }
+        });
     }
 
     public static DataValue parseValue(Object value, Marshaller marshaller) {
         StringWriter sw = new StringWriter();
 
         if (value instanceof JAXBElement) {
-            JAXBElement<?> jaxbElement = JAXBElement.class.cast(value);
+            JAXBElement<?> jaxbElement = (JAXBElement) value;
 
             try {
                 marshaller.marshal(jaxbElement, sw);
@@ -95,7 +77,7 @@ public class AttributeUtil {
                 return new DataValue(Variant.NULL_VALUE);
             }
         } else if (value instanceof Node) {
-            Node node = Node.class.cast(value);
+            Node node = (Node) value;
 
             try {
                 Transformer transformer = TransformerFactory.newInstance().newTransformer();

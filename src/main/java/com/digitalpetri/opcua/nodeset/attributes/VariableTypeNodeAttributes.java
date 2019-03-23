@@ -36,7 +36,8 @@ public class VariableTypeNodeAttributes extends NodeAttributes {
         NodeId dataType,
         int valueRank,
         UInteger[] arrayDimensions,
-        boolean isAbstract) {
+        boolean isAbstract
+    ) {
 
         super(nodeId, NodeClass.VariableType, browseName, displayName, description, writeMask, userWriteMask);
 

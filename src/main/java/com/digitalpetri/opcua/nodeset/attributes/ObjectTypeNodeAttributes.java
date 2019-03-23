@@ -20,7 +20,8 @@ public class ObjectTypeNodeAttributes extends NodeAttributes {
         LocalizedText description,
         UInteger writeMask,
         UInteger userWriteMask,
-        boolean isAbstract) {
+        boolean isAbstract
+    ) {
 
         super(nodeId, NodeClass.ObjectType, browseName, displayName, description, writeMask, userWriteMask);
 

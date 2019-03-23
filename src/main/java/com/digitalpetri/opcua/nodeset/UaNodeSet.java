@@ -39,33 +39,31 @@ import org.opcfoundation.ua.generated.UAView;
 
 public class UaNodeSet {
 
-    private static final String OPC_UA_NAMESPACE = "http://opcfoundation.org/UA/";
-
-    private final Map<NodeId, NodeAttributes> nodeAttributes;
-    private final ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> referenceDetails;
+    private final Map<NodeId, NodeAttributes> nodes;
+    private final ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> references;
     private final NamespaceTable namespaceTable;
-    private final Map<String, NodeId> aliasMap;
+    private final Map<String, NodeId> aliases;
     private final Map<NodeId, DataTypeDefinition> dataTypeDefinitions;
 
     public UaNodeSet(
-        Map<NodeId, NodeAttributes> nodeAttributes,
-        ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> referenceDetails,
+        Map<NodeId, NodeAttributes> nodes,
+        ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> references,
         NamespaceTable namespaceTable,
-        Map<String, NodeId> aliasMap,
+        Map<String, NodeId> aliases,
         Map<NodeId, DataTypeDefinition> dataTypeDefinitions) {
 
-        this.nodeAttributes = nodeAttributes;
-        this.referenceDetails = referenceDetails;
+        this.nodes = nodes;
+        this.references = references;
         this.namespaceTable = namespaceTable;
-        this.aliasMap = aliasMap;
+        this.aliases = aliases;
         this.dataTypeDefinitions = dataTypeDefinitions;
     }
 
     UaNodeSet(UANodeSet nodeSet) throws JAXBException {
-        aliasMap = new HashMap<>();
+        aliases = new HashMap<>();
         namespaceTable = new NamespaceTable();
-        referenceDetails = ArrayListMultimap.create();
-        nodeAttributes = new HashMap<>();
+        references = ArrayListMultimap.create();
+        nodes = new HashMap<>();
         dataTypeDefinitions = new HashMap<>();
 
         JAXBContext jaxbContext = JAXBContext.newInstance(ObjectFactory.class);
@@ -76,7 +74,7 @@ public class UaNodeSet {
         if (aliasTable != null) {
             List<NodeIdAlias> aliases = aliasTable.getAlias();
             if (aliases != null) {
-                aliases.forEach(a -> aliasMap.put(a.getAlias(), NodeId.parse(a.getValue())));
+                aliases.forEach(a -> this.aliases.put(a.getAlias(), NodeId.parse(a.getValue())));
             }
         }
 
@@ -92,14 +90,15 @@ public class UaNodeSet {
 
             gNode.getReferences().getReference().forEach(
                 gReference -> {
-                    org.eclipse.milo.opcua.sdk.core.Reference reference = reference(sourceNodeId, gReference);
-                    referenceDetails.put(sourceNodeId, reference);
+                    org.eclipse.milo.opcua.sdk.core.Reference reference =
+                        referenceFromGenerated(sourceNodeId, gReference);
 
-                    reference.invert().ifPresent(
+                    references.put(sourceNodeId, reference);
+
+                    reference.invert(namespaceTable).ifPresent(
                         inverse ->
-                            referenceDetails.put(inverse.getSourceNodeId(), inverse)
+                            references.put(inverse.getSourceNodeId(), inverse)
                     );
-
                 }
             );
         });
@@ -125,42 +124,46 @@ public class UaNodeSet {
             } else if (gNode instanceof UAReferenceType) {
                 attributes = ReferenceTypeNodeAttributes.fromGenerated((UAReferenceType) gNode);
             } else if (gNode instanceof UAVariable) {
-                attributes = VariableNodeAttributes.fromGenerated((UAVariable) gNode, marshaller, aliasMap);
+                attributes = VariableNodeAttributes.fromGenerated((UAVariable) gNode, marshaller, aliases);
             } else if (gNode instanceof UAVariableType) {
-                attributes = VariableTypeNodeAttributes.fromGenerated((UAVariableType) gNode, marshaller, aliasMap);
+                attributes = VariableTypeNodeAttributes.fromGenerated((UAVariableType) gNode, marshaller, aliases);
             } else if (gNode instanceof UAView) {
                 attributes = ViewNodeAttributes.fromGenerated((UAView) gNode);
             }
 
             if (attributes != null) {
-                nodeAttributes.put(attributes.getNodeId(), attributes);
+                nodes.put(attributes.getNodeId(), attributes);
             }
         });
     }
 
-    public Map<String, NodeId> getAliasMap() {
-        return aliasMap;
+    public Map<String, NodeId> getAliases() {
+        return aliases;
     }
 
     public NamespaceTable getNamespaceTable() {
         return namespaceTable;
     }
 
-    public Map<NodeId, NodeAttributes> getNodeAttributes() {
-        return nodeAttributes;
+    public Map<NodeId, NodeAttributes> getNodes() {
+        return nodes;
     }
 
-    public ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> getReferenceDetails() {
-        return referenceDetails;
+    public ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> getReferences() {
+        return references;
     }
 
     public Map<NodeId, DataTypeDefinition> getDataTypeDefinitions() {
         return dataTypeDefinitions;
     }
 
-    private org.eclipse.milo.opcua.sdk.core.Reference reference(NodeId sourceNodeId, Reference gReference) {
+    private org.eclipse.milo.opcua.sdk.core.Reference referenceFromGenerated(
+        NodeId sourceNodeId,
+        Reference gReference
+    ) {
+
         NodeId targetNodeId = NodeId.parse(gReference.getValue());
-        NodeId referenceTypeId = AttributeUtil.parseReferenceTypeId(gReference, aliasMap);
+        NodeId referenceTypeId = AttributeUtil.parseReferenceTypeId(gReference, aliases);
         boolean isForward = gReference.isIsForward();
 
         return new org.eclipse.milo.opcua.sdk.core.Reference(
