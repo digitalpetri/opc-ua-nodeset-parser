@@ -114,7 +114,9 @@ public class UaNodeSet {
 
                 DataTypeDefinition definition = gDataTypeNode.getDefinition();
 
-                dataTypeDefinitions.put(attributes.getNodeId(), definition);
+                if (definition != null) {
+                    dataTypeDefinitions.put(attributes.getNodeId(), definition);
+                }
             } else if (gNode instanceof UAMethod) {
                 attributes = MethodNodeAttributes.fromGenerated((UAMethod) gNode);
             } else if (gNode instanceof UAObject) {
