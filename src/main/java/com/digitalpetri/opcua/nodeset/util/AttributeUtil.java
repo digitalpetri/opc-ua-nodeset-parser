@@ -16,7 +16,12 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.eclipse.milo.opcua.stack.core.Identifiers;
+import org.eclipse.milo.opcua.stack.core.NamespaceTable;
+import org.eclipse.milo.opcua.stack.core.serialization.EncodingLimits;
 import org.eclipse.milo.opcua.stack.core.serialization.OpcUaXmlStreamDecoder;
+import org.eclipse.milo.opcua.stack.core.serialization.SerializationContext;
+import org.eclipse.milo.opcua.stack.core.types.DataTypeManager;
+import org.eclipse.milo.opcua.stack.core.types.OpcUaDataTypeManager;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
@@ -31,6 +36,26 @@ import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.
 public class AttributeUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AttributeUtil.class);
+
+    private static final SerializationContext SERIALIZATION_CONTEXT = new SerializationContext() {
+
+        private final NamespaceTable namespaceTable = new NamespaceTable();
+
+        @Override
+        public EncodingLimits getEncodingLimits() {
+            return EncodingLimits.DEFAULT;
+        }
+
+        @Override
+        public NamespaceTable getNamespaceTable() {
+            return namespaceTable;
+        }
+
+        @Override
+        public DataTypeManager getDataTypeManager() {
+            return OpcUaDataTypeManager.getInstance();
+        }
+    };
 
     public static NodeId parseDataType(String dataType, Map<String, NodeId> aliases) {
         return tryParseNodeId(aliases, dataType);
@@ -91,7 +116,9 @@ public class AttributeUtil {
 
         String xmlString = sw.toString();
         try {
-            OpcUaXmlStreamDecoder xmlReader = new OpcUaXmlStreamDecoder(new StringReader(xmlString));
+            OpcUaXmlStreamDecoder xmlReader = new OpcUaXmlStreamDecoder(SERIALIZATION_CONTEXT);
+            xmlReader.setInput(new StringReader(xmlString));
+
             Object valueObject = xmlReader.readVariantValue();
 
             return new DataValue(new Variant(valueObject));
