@@ -1,0 +1,14 @@
+<!--
+This dummy file is required to work around a jaxb-maven-plugin
+bug that causes builds to fail with the following error:
+    Prefix '' is already bound to ''
+-->
+<xs:schema id="Dummy" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="Dummy">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="test"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
