@@ -5,7 +5,7 @@
 
     <groupId>com.digitalpetri.opcua</groupId>
     <artifactId>uanodeset-parser</artifactId>
-    <version>0.3.0-SNAPSHOT</version>
+    <version>0.4.0-SNAPSHOT</version>
 
     <name>UANodeSet XML Parser</name>
     <description>A parser and node-generator for XML files conforming to the UANodeSet schema. See
