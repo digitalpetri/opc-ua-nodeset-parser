@@ -86,7 +86,7 @@ public class UaNodeSet {
 
         // Reference Details
         nodeSet.getUAObjectOrUAVariableOrUAMethod().forEach(gNode -> {
-            NodeId sourceNodeId = NodeId.parse(gNode.getNodeId());
+            NodeId sourceNodeId = AttributeUtil.tryParseNodeId(gNode.getNodeId(), aliases);
 
             gNode.getReferences().getReference().forEach(
                 gReference -> {
@@ -164,7 +164,7 @@ public class UaNodeSet {
         Reference gReference
     ) {
 
-        NodeId targetNodeId = NodeId.parse(gReference.getValue());
+        NodeId targetNodeId = AttributeUtil.tryParseNodeId(gReference.getValue(), aliases);
         NodeId referenceTypeId = AttributeUtil.parseReferenceTypeId(gReference, aliases);
         boolean isForward = gReference.isIsForward();
 

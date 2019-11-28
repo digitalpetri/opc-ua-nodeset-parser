@@ -58,16 +58,16 @@ public class AttributeUtil {
     };
 
     public static NodeId parseDataType(String dataType, Map<String, NodeId> aliases) {
-        return tryParseNodeId(aliases, dataType);
+        return tryParseNodeId(dataType, aliases);
     }
 
     public static NodeId parseReferenceTypeId(Reference gReference, Map<String, NodeId> aliases) {
         String referenceType = gReference.getReferenceType();
 
-        return tryParseNodeId(aliases, referenceType);
+        return tryParseNodeId(referenceType, aliases);
     }
 
-    private static NodeId tryParseNodeId(Map<String, NodeId> aliases, String id) {
+    public static NodeId tryParseNodeId(String id, Map<String, NodeId> aliases) {
         return NodeId.parseSafe(id).orElseGet(() -> {
             if (aliases.containsKey(id)) {
                 return aliases.get(id);
