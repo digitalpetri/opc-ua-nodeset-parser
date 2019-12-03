@@ -89,7 +89,13 @@ public class AttributeUtil {
         });
     }
 
-    public static DataValue parseValue(Object value, Marshaller marshaller) {
+    public static DataValue parseValue(
+        Object value,
+        Marshaller marshaller,
+        NodeId nodeId,
+        Map<NodeId, String> rawXmlValues
+    ) {
+
         StringWriter sw = new StringWriter();
 
         if (value instanceof JAXBElement) {
@@ -121,6 +127,8 @@ public class AttributeUtil {
 
             Object valueObject = xmlReader.readVariantValue();
 
+            rawXmlValues.put(nodeId, xmlString);
+
             return new DataValue(new Variant(valueObject));
         } catch (Throwable t) {
             LOGGER.warn("unable to parse Value: " + xmlString, t);
@@ -140,6 +148,16 @@ public class AttributeUtil {
             }
 
             return dimensions;
+        }
+    }
+
+    public static class ParsedDataValue {
+        final String rawXml;
+        final DataValue value;
+
+        public ParsedDataValue(String rawXml, DataValue value) {
+            this.rawXml = rawXml;
+            this.value = value;
         }
     }
 

@@ -44,19 +44,23 @@ public class UaNodeSet {
     private final NamespaceTable namespaceTable;
     private final Map<String, NodeId> aliases;
     private final Map<NodeId, DataTypeDefinition> dataTypeDefinitions;
+    private final Map<NodeId, String> rawXmlValues;
 
     public UaNodeSet(
         Map<NodeId, NodeAttributes> nodes,
         ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> references,
         NamespaceTable namespaceTable,
         Map<String, NodeId> aliases,
-        Map<NodeId, DataTypeDefinition> dataTypeDefinitions) {
+        Map<NodeId, DataTypeDefinition> dataTypeDefinitions,
+        Map<NodeId, String> rawXmlValues
+    ) {
 
         this.nodes = nodes;
         this.references = references;
         this.namespaceTable = namespaceTable;
         this.aliases = aliases;
         this.dataTypeDefinitions = dataTypeDefinitions;
+        this.rawXmlValues = rawXmlValues;
     }
 
     UaNodeSet(UANodeSet nodeSet) throws JAXBException {
@@ -65,6 +69,7 @@ public class UaNodeSet {
         references = ArrayListMultimap.create();
         nodes = new HashMap<>();
         dataTypeDefinitions = new HashMap<>();
+        rawXmlValues = new HashMap<>();
 
         JAXBContext jaxbContext = JAXBContext.newInstance(ObjectFactory.class);
         Marshaller marshaller = jaxbContext.createMarshaller();
@@ -94,11 +99,6 @@ public class UaNodeSet {
                         referenceFromGenerated(sourceNodeId, gReference);
 
                     references.put(sourceNodeId, reference);
-
-                    reference.invert(namespaceTable).ifPresent(
-                        inverse ->
-                            references.put(inverse.getSourceNodeId(), inverse)
-                    );
                 }
             );
         });
@@ -126,9 +126,13 @@ public class UaNodeSet {
             } else if (gNode instanceof UAReferenceType) {
                 attributes = ReferenceTypeNodeAttributes.fromGenerated((UAReferenceType) gNode);
             } else if (gNode instanceof UAVariable) {
-                attributes = VariableNodeAttributes.fromGenerated((UAVariable) gNode, marshaller, aliases);
+                attributes = VariableNodeAttributes.fromGenerated(
+                    (UAVariable) gNode, marshaller, aliases, rawXmlValues
+                );
             } else if (gNode instanceof UAVariableType) {
-                attributes = VariableTypeNodeAttributes.fromGenerated((UAVariableType) gNode, marshaller, aliases);
+                attributes = VariableTypeNodeAttributes.fromGenerated(
+                    (UAVariableType) gNode, marshaller, aliases, rawXmlValues
+                );
             } else if (gNode instanceof UAView) {
                 attributes = ViewNodeAttributes.fromGenerated((UAView) gNode);
             }
@@ -157,6 +161,10 @@ public class UaNodeSet {
 
     public Map<NodeId, DataTypeDefinition> getDataTypeDefinitions() {
         return dataTypeDefinitions;
+    }
+
+    public Map<NodeId, String> getRawXmlValues() {
+        return rawXmlValues;
     }
 
     private org.eclipse.milo.opcua.sdk.core.Reference referenceFromGenerated(

@@ -107,7 +107,9 @@ public class VariableNodeAttributes extends NodeAttributes {
     public static VariableNodeAttributes fromGenerated(
         UAVariable gNode,
         Marshaller marshaller,
-        Map<String, NodeId> aliasMap) {
+        Map<String, NodeId> aliasMap,
+        Map<NodeId, String> rawXmlValues
+    ) {
 
         NodeId nodeId = NodeId.parse(gNode.getNodeId());
         QualifiedName browseName = QualifiedName.parse(gNode.getBrowseName());
@@ -125,7 +127,7 @@ public class VariableNodeAttributes extends NodeAttributes {
         UInteger writeMask = uint(gNode.getWriteMask());
         UInteger userWriteMask = uint(gNode.getUserWriteMask());
 
-        DataValue value = value(gNode.getValue(), marshaller);
+        DataValue value = value(gNode.getValue(), marshaller, nodeId, rawXmlValues);
         NodeId dataType = AttributeUtil.parseDataType(gNode.getDataType(), aliasMap);
         int valueRank = gNode.getValueRank();
         UInteger[] arrayDimensions = AttributeUtil.parseArrayDimensions(gNode.getArrayDimensions());
@@ -152,10 +154,16 @@ public class VariableNodeAttributes extends NodeAttributes {
         );
     }
 
-    private static DataValue value(UAVariable.Value gValue, Marshaller marshaller) {
+    private static DataValue value(
+        UAVariable.Value gValue,
+        Marshaller marshaller,
+        NodeId nodeId,
+        Map<NodeId, String> rawXmlValues
+    ) {
+
         if (gValue == null) return new DataValue(Variant.NULL_VALUE);
 
-        return AttributeUtil.parseValue(gValue.getAny(), marshaller);
+        return AttributeUtil.parseValue(gValue.getAny(), marshaller, nodeId, rawXmlValues);
     }
 
 }
