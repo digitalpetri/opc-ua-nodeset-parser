@@ -39,8 +39,11 @@ import org.opcfoundation.ua.generated.UAView;
 
 public class UaNodeSet {
 
+    private ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> allReferences;
+
     private final Map<NodeId, NodeAttributes> nodes;
     private final ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> references;
+    private final ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> inverseReferences;
     private final NamespaceTable namespaceTable;
     private final Map<String, NodeId> aliases;
     private final Map<NodeId, DataTypeDefinition> dataTypeDefinitions;
@@ -49,6 +52,7 @@ public class UaNodeSet {
     public UaNodeSet(
         Map<NodeId, NodeAttributes> nodes,
         ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> references,
+        ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> inverseReferences,
         NamespaceTable namespaceTable,
         Map<String, NodeId> aliases,
         Map<NodeId, DataTypeDefinition> dataTypeDefinitions,
@@ -57,6 +61,7 @@ public class UaNodeSet {
 
         this.nodes = nodes;
         this.references = references;
+        this.inverseReferences = inverseReferences;
         this.namespaceTable = namespaceTable;
         this.aliases = aliases;
         this.dataTypeDefinitions = dataTypeDefinitions;
@@ -67,6 +72,7 @@ public class UaNodeSet {
         aliases = new HashMap<>();
         namespaceTable = new NamespaceTable();
         references = ArrayListMultimap.create();
+        inverseReferences = ArrayListMultimap.create();
         nodes = new HashMap<>();
         dataTypeDefinitions = new HashMap<>();
         rawXmlValues = new HashMap<>();
@@ -99,6 +105,11 @@ public class UaNodeSet {
                         referenceFromGenerated(sourceNodeId, gReference);
 
                     references.put(sourceNodeId, reference);
+
+                    reference.invert(namespaceTable).ifPresent(
+                        inverseReference ->
+                            inverseReferences.put(inverseReference.getSourceNodeId(), inverseReference)
+                    );
                 }
             );
         });
@@ -157,6 +168,20 @@ public class UaNodeSet {
 
     public ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> getReferences() {
         return references;
+    }
+
+    public ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> getInverseReferences() {
+        return inverseReferences;
+    }
+
+    public synchronized ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> getAllReferences() {
+        if (allReferences == null) {
+            allReferences = ArrayListMultimap.create();
+            allReferences.putAll(references);
+            allReferences.putAll(inverseReferences);
+        }
+
+        return allReferences;
     }
 
     public Map<NodeId, DataTypeDefinition> getDataTypeDefinitions() {
