@@ -82,6 +82,11 @@ public class UaNodeSetTest {
         parse("plc/Opc.Ua.Plc.NodeSet2.xml");
     }
 
+    @Test
+    public void testParseSchemaNodeSet() throws Exception {
+        parse("schema/Opc.Ua.NodeSet.Schema.Check.xml");
+    }
+
     private void parse(String nodeSetFilename) throws JAXBException {
         InputStream nodeSetXml = getClass().getClassLoader().getResourceAsStream(nodeSetFilename);
 

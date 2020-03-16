@@ -16,3 +16,7 @@ target/*
 src/main/generated/*
 
 release.properties
+
+# macOS
+.DS_Store
+
