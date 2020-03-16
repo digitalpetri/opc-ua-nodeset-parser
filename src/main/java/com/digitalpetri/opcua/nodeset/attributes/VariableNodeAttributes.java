@@ -161,7 +161,9 @@ public class VariableNodeAttributes extends NodeAttributes {
         Map<NodeId, String> rawXmlValues
     ) {
 
-        if (gValue == null) return new DataValue(Variant.NULL_VALUE);
+        if (gValue == null || gValue.getAny() == null) {
+            return new DataValue(Variant.NULL_VALUE);
+        }
 
         return AttributeUtil.parseValue(gValue.getAny(), marshaller, nodeId, rawXmlValues);
     }

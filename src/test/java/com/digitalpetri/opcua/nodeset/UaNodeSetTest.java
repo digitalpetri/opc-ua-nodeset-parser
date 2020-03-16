@@ -83,7 +83,7 @@ public class UaNodeSetTest {
     }
 
     @Test
-    public void testParseSchemaNodeSet() throws Exception {
+    public void testParseSchemaCheckNodeSet() throws Exception {
         parse("schema/Opc.Ua.NodeSet.Schema.Check.xml");
     }
 
