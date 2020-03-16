@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -99,7 +100,7 @@ public class UaNodeSet {
         nodeSet.getUAObjectOrUAVariableOrUAMethod().forEach(gNode -> {
             NodeId sourceNodeId = AttributeUtil.tryParseNodeId(gNode.getNodeId(), aliases);
 
-            gNode.getReferences().getReference().forEach(
+            Optional.ofNullable(gNode.getReferences()).ifPresent(gReferences->gReferences.getReference().forEach(
                 gReference -> {
                     org.eclipse.milo.opcua.sdk.core.Reference reference =
                         referenceFromGenerated(sourceNodeId, gReference);
@@ -111,7 +112,7 @@ public class UaNodeSet {
                             implicitReferences.put(inverseReference.getSourceNodeId(), inverseReference)
                     );
                 }
-            );
+            ));
         });
 
         // Node Attributes
