@@ -11,11 +11,11 @@
     <description>A parser and node-generator for XML files conforming to the UANodeSet schema. See
         http://opcfoundation.org/UA/schemas/1.03/UANodeSet.xsd.
     </description>
-    <url>https://github.com/digitalpetri/uanodeset-parser</url>
+    <url>https://github.com/digitalpetri/opc-ua-nodeset-parser</url>
 
     <scm>
-        <url>https://github.com/digitalpetri/uanodeset-parser</url>
-        <connection>scm:git:git@github.com:digitalpetri/uanodeset-parser.git</connection>
+        <url>https://github.com/digitalpetri/opc-ua-nodeset-parser</url>
+        <connection>scm:git:git@github.com:digitalpetri/opc-ua-nodeset-parser.git</connection>
         <tag>HEAD</tag>
     </scm>
 
