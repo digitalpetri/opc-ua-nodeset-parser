@@ -40,39 +40,39 @@ import org.opcfoundation.ua.generated.UAView;
 
 public class UaNodeSet {
 
-    private ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> allReferences;
+    private ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> combinedReferences;
 
     private final Map<NodeId, NodeAttributes> nodes;
-    private final ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> references;
+    private final ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> explicitReferences;
     private final ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> implicitReferences;
     private final NamespaceTable namespaceTable;
-    private final Map<String, NodeId> aliases;
+    private final Map<String, NodeId> aliasTable;
     private final Map<NodeId, DataTypeDefinition> dataTypeDefinitions;
     private final Map<NodeId, String> rawXmlValues;
 
     public UaNodeSet(
         Map<NodeId, NodeAttributes> nodes,
-        ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> references,
+        ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> explicitReferences,
         ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> implicitReferences,
         NamespaceTable namespaceTable,
-        Map<String, NodeId> aliases,
+        Map<String, NodeId> aliasTable,
         Map<NodeId, DataTypeDefinition> dataTypeDefinitions,
         Map<NodeId, String> rawXmlValues
     ) {
 
         this.nodes = nodes;
-        this.references = references;
+        this.explicitReferences = explicitReferences;
         this.implicitReferences = implicitReferences;
         this.namespaceTable = namespaceTable;
-        this.aliases = aliases;
+        this.aliasTable = aliasTable;
         this.dataTypeDefinitions = dataTypeDefinitions;
         this.rawXmlValues = rawXmlValues;
     }
 
     UaNodeSet(UANodeSet nodeSet) throws JAXBException {
-        aliases = new HashMap<>();
+        aliasTable = new HashMap<>();
         namespaceTable = new NamespaceTable();
-        references = ArrayListMultimap.create();
+        explicitReferences = ArrayListMultimap.create();
         implicitReferences = ArrayListMultimap.create();
         nodes = new HashMap<>();
         dataTypeDefinitions = new HashMap<>();
@@ -86,7 +86,7 @@ public class UaNodeSet {
         if (aliasTable != null) {
             List<NodeIdAlias> aliases = aliasTable.getAlias();
             if (aliases != null) {
-                aliases.forEach(a -> this.aliases.put(a.getAlias(), NodeId.parse(a.getValue())));
+                aliases.forEach(a -> this.aliasTable.put(a.getAlias(), NodeId.parse(a.getValue())));
             }
         }
 
@@ -98,14 +98,14 @@ public class UaNodeSet {
 
         // Reference Details
         nodeSet.getUAObjectOrUAVariableOrUAMethod().forEach(gNode -> {
-            NodeId sourceNodeId = AttributeUtil.tryParseNodeId(gNode.getNodeId(), aliases);
+            NodeId sourceNodeId = AttributeUtil.tryParseNodeId(gNode.getNodeId(), this.aliasTable);
 
-            Optional.ofNullable(gNode.getReferences()).ifPresent(gReferences->gReferences.getReference().forEach(
+            Optional.ofNullable(gNode.getReferences()).ifPresent(gReferences -> gReferences.getReference().forEach(
                 gReference -> {
                     org.eclipse.milo.opcua.sdk.core.Reference reference =
                         referenceFromGenerated(sourceNodeId, gReference);
 
-                    references.put(sourceNodeId, reference);
+                    explicitReferences.put(sourceNodeId, reference);
 
                     reference.invert(namespaceTable).ifPresent(
                         inverseReference ->
@@ -139,11 +139,11 @@ public class UaNodeSet {
                 attributes = ReferenceTypeNodeAttributes.fromGenerated((UAReferenceType) gNode);
             } else if (gNode instanceof UAVariable) {
                 attributes = VariableNodeAttributes.fromGenerated(
-                    (UAVariable) gNode, marshaller, aliases, rawXmlValues
+                    (UAVariable) gNode, marshaller, this.aliasTable, rawXmlValues
                 );
             } else if (gNode instanceof UAVariableType) {
                 attributes = VariableTypeNodeAttributes.fromGenerated(
-                    (UAVariableType) gNode, marshaller, aliases, rawXmlValues
+                    (UAVariableType) gNode, marshaller, this.aliasTable, rawXmlValues
                 );
             } else if (gNode instanceof UAView) {
                 attributes = ViewNodeAttributes.fromGenerated((UAView) gNode);
@@ -155,8 +155,8 @@ public class UaNodeSet {
         });
     }
 
-    public Map<String, NodeId> getAliases() {
-        return aliases;
+    public Map<String, NodeId> getAliasTable() {
+        return aliasTable;
     }
 
     public NamespaceTable getNamespaceTable() {
@@ -172,8 +172,8 @@ public class UaNodeSet {
      *
      * @return the {@link Reference}s that were explicitly defined by the NodeSet.
      */
-    public ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> getReferences() {
-        return references;
+    public ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> getExplicitReferences() {
+        return explicitReferences;
     }
 
     /**
@@ -190,17 +190,17 @@ public class UaNodeSet {
      * Get all {@link Reference}s defined by the NodeSet, i.e. both explicit and implicit references.
      *
      * @return all {@link Reference}s defined by the NodeSet.
-     * @see #getReferences()
+     * @see #getExplicitReferences()
      * @see #getImplicitReferences()
      */
-    public synchronized ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> getAllReferences() {
-        if (allReferences == null) {
-            allReferences = ArrayListMultimap.create();
-            allReferences.putAll(references);
-            allReferences.putAll(implicitReferences);
+    public synchronized ListMultimap<NodeId, org.eclipse.milo.opcua.sdk.core.Reference> getCombinedReferences() {
+        if (combinedReferences == null) {
+            combinedReferences = ArrayListMultimap.create();
+            combinedReferences.putAll(explicitReferences);
+            combinedReferences.putAll(implicitReferences);
         }
 
-        return allReferences;
+        return combinedReferences;
     }
 
     public Map<NodeId, DataTypeDefinition> getDataTypeDefinitions() {
@@ -216,8 +216,8 @@ public class UaNodeSet {
         Reference gReference
     ) {
 
-        NodeId targetNodeId = AttributeUtil.tryParseNodeId(gReference.getValue(), aliases);
-        NodeId referenceTypeId = AttributeUtil.parseReferenceTypeId(gReference, aliases);
+        NodeId targetNodeId = AttributeUtil.tryParseNodeId(gReference.getValue(), aliasTable);
+        NodeId referenceTypeId = AttributeUtil.parseReferenceTypeId(gReference, aliasTable);
         boolean isForward = gReference.isIsForward();
 
         return new org.eclipse.milo.opcua.sdk.core.Reference(
