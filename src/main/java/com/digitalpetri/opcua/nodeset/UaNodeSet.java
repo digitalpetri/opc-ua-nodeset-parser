@@ -187,7 +187,8 @@ public class UaNodeSet {
     }
 
     /**
-     * Get all {@link Reference}s defined by the NodeSet, i.e. both explicit and implicit references.
+     * Get all {@link Reference}s defined by the NodeSet, i.e. both explicit and implicit
+     * references.
      *
      * @return all {@link Reference}s defined by the NodeSet.
      * @see #getExplicitReferences()
@@ -209,6 +210,17 @@ public class UaNodeSet {
 
     public Map<NodeId, String> getRawXmlValues() {
         return rawXmlValues;
+    }
+
+    /**
+     * Merge another {@link UaNodeSet} into this one and return a new {@link UaNodeSet} with the
+     * contents of both.
+     *
+     * @param other the {@link UaNodeSet} to merge.
+     * @return a new {@link UANodeSet} containing the contents of {@code other} merged into this.
+     */
+    public UaNodeSet merge(UaNodeSet other) {
+        return UaNodeSetMerger.merge(this, other);
     }
 
     private org.eclipse.milo.opcua.sdk.core.Reference referenceFromGenerated(
