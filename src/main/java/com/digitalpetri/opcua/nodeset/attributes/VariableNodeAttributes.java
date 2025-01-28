@@ -1,8 +1,9 @@
 package com.digitalpetri.opcua.nodeset.attributes;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
-import javax.xml.bind.Marshaller;
+
 
 import com.digitalpetri.opcua.nodeset.util.AttributeUtil;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
@@ -17,6 +18,9 @@ import org.opcfoundation.ua.generated.UAVariable;
 
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.ubyte;
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
+
+import jakarta.xml.bind.Marshaller;
+
 
 public class VariableNodeAttributes extends NodeAttributes {
 
@@ -130,7 +134,7 @@ public class VariableNodeAttributes extends NodeAttributes {
         DataValue value = value(gNode.getValue(), marshaller, nodeId, rawXmlValues);
         NodeId dataType = AttributeUtil.parseDataType(gNode.getDataType(), aliasMap);
         int valueRank = gNode.getValueRank();
-        UInteger[] arrayDimensions = AttributeUtil.parseArrayDimensions(gNode.getArrayDimensions());
+        UInteger[] arrayDimensions = AttributeUtil.parseArrayDimensions(Collections.singletonList(gNode.getArrayDimensions()));
         UByte accessLevel = ubyte(gNode.getAccessLevel());
         UByte userAccessLevel = ubyte(gNode.getUserAccessLevel());
         Double minimumSamplingInterval = gNode.getMinimumSamplingInterval();

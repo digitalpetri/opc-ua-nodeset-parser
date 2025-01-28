@@ -6,9 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
+
+
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -17,9 +16,13 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.eclipse.milo.opcua.stack.core.Identifiers;
 import org.eclipse.milo.opcua.stack.core.NamespaceTable;
-import org.eclipse.milo.opcua.stack.core.serialization.EncodingLimits;
-import org.eclipse.milo.opcua.stack.core.serialization.OpcUaXmlStreamDecoder;
-import org.eclipse.milo.opcua.stack.core.serialization.SerializationContext;
+
+import org.eclipse.milo.opcua.stack.core.ServerTable;
+import org.eclipse.milo.opcua.stack.core.channel.EncodingLimits;
+import org.eclipse.milo.opcua.stack.core.encoding.EncodingContext;
+import org.eclipse.milo.opcua.stack.core.encoding.EncodingManager;
+import org.eclipse.milo.opcua.stack.core.encoding.OpcUaEncodingManager;
+import org.eclipse.milo.opcua.stack.core.encoding.xml.OpcUaXmlDecoder;
 import org.eclipse.milo.opcua.stack.core.types.DataTypeManager;
 import org.eclipse.milo.opcua.stack.core.types.OpcUaDataTypeManager;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
@@ -33,11 +36,16 @@ import org.w3c.dom.Node;
 
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
 
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
+
+
 public class AttributeUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AttributeUtil.class);
 
-    private static final SerializationContext SERIALIZATION_CONTEXT = new SerializationContext() {
+    private static final EncodingContext SERIALIZATION_CONTEXT = new EncodingContext() {
 
         private final NamespaceTable namespaceTable = new NamespaceTable();
 
@@ -52,8 +60,18 @@ public class AttributeUtil {
         }
 
         @Override
+        public ServerTable getServerTable() {
+            return new ServerTable();
+        }
+
+        @Override
         public DataTypeManager getDataTypeManager() {
             return OpcUaDataTypeManager.getInstance();
+        }
+
+        @Override
+        public EncodingManager getEncodingManager() {
+            return OpcUaEncodingManager.getInstance();
         }
     };
 
@@ -122,7 +140,7 @@ public class AttributeUtil {
 
         String xmlString = sw.toString();
         try {
-            OpcUaXmlStreamDecoder xmlReader = new OpcUaXmlStreamDecoder(SERIALIZATION_CONTEXT);
+            OpcUaXmlDecoder xmlReader = new OpcUaXmlDecoder(SERIALIZATION_CONTEXT);
             xmlReader.setInput(new StringReader(xmlString));
 
             Object valueObject = xmlReader.readVariantValue();
@@ -137,7 +155,7 @@ public class AttributeUtil {
     }
 
     public static UInteger[] parseArrayDimensions(List<String> list) {
-        if (list.isEmpty()) {
+        if (list.isEmpty() || list.get(0).equals("")) {
             return new UInteger[0];
         } else {
             String[] ss = list.get(0).split(",");

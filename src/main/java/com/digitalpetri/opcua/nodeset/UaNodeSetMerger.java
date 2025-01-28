@@ -13,12 +13,15 @@ import com.digitalpetri.opcua.nodeset.attributes.ReferenceTypeNodeAttributes;
 import com.digitalpetri.opcua.nodeset.attributes.VariableNodeAttributes;
 import com.digitalpetri.opcua.nodeset.attributes.VariableTypeNodeAttributes;
 import com.digitalpetri.opcua.nodeset.attributes.ViewNodeAttributes;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
+
 import org.eclipse.milo.opcua.sdk.core.Reference;
 import org.eclipse.milo.opcua.stack.core.NamespaceTable;
-import org.eclipse.milo.opcua.stack.core.serialization.EncodingLimits;
-import org.eclipse.milo.opcua.stack.core.serialization.SerializationContext;
+
+import org.eclipse.milo.opcua.stack.core.ServerTable;
+import org.eclipse.milo.opcua.stack.core.channel.EncodingLimits;
+import org.eclipse.milo.opcua.stack.core.encoding.EncodingContext;
+import org.eclipse.milo.opcua.stack.core.encoding.EncodingManager;
+import org.eclipse.milo.opcua.stack.core.encoding.OpcUaEncodingManager;
 import org.eclipse.milo.opcua.stack.core.types.DataTypeManager;
 import org.eclipse.milo.opcua.stack.core.types.OpcUaDataTypeManager;
 import org.eclipse.milo.opcua.stack.core.types.builtin.ByteString;
@@ -31,7 +34,12 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
 import org.eclipse.milo.opcua.stack.core.types.builtin.XmlElement;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UShort;
 import org.eclipse.milo.opcua.stack.core.types.structured.Argument;
+
 import org.eclipse.milo.opcua.stack.core.util.ArrayUtil;
+import org.eclipse.milo.shaded.com.google.common.collect.ArrayListMultimap;
+import org.eclipse.milo.shaded.com.google.common.collect.ListMultimap;
+
+
 import org.opcfoundation.ua.generated.DataTypeDefinition;
 import org.opcfoundation.ua.generated.DataTypeField;
 import org.slf4j.Logger;
@@ -57,7 +65,7 @@ public final class UaNodeSetMerger {
         for (String uri : nodeSet2.getNamespaceTable().toArray()) {
             UShort index = namespaceTable.getIndex(uri);
             if (index == null) {
-                namespaceTable.addUri(uri);
+                namespaceTable.add(uri);
             }
         }
 
@@ -161,7 +169,7 @@ public final class UaNodeSetMerger {
         NamespaceTable originalNamespaceTable
     ) {
 
-        String namespaceUri = originalNamespaceTable.getUri(nodeId.getNamespaceIndex());
+        String namespaceUri = originalNamespaceTable.get(nodeId.getNamespaceIndex());
 
         return nodeId.reindex(currentNamespaceTable, namespaceUri);
     }
@@ -184,7 +192,7 @@ public final class UaNodeSetMerger {
         if (expandedNodeId.isAbsolute()) {
             return expandedNodeId;
         } else {
-            String namespaceUri = originalNamespaceTable.getUri(expandedNodeId.getNamespaceIndex());
+            String namespaceUri = originalNamespaceTable.get(expandedNodeId.getNamespaceIndex());
 
             return expandedNodeId.reindex(currentNamespaceTable, namespaceUri);
         }
@@ -196,7 +204,7 @@ public final class UaNodeSetMerger {
         NamespaceTable originalNamespaceTable
     ) {
 
-        String namespaceUri = originalNamespaceTable.getUri(browseName.getNamespaceIndex());
+        String namespaceUri = originalNamespaceTable.get(browseName.getNamespaceIndex());
 
         return browseName.reindex(currentNamespaceTable, namespaceUri);
     }
@@ -207,16 +215,16 @@ public final class UaNodeSetMerger {
         NamespaceTable originalNamespaceTable
     ) {
 
-        String sourceNamespaceUri = originalNamespaceTable.getUri(
+        String sourceNamespaceUri = originalNamespaceTable.get(
             reference.getSourceNodeId().getNamespaceIndex()
         );
-        String referenceNamespaceUri = originalNamespaceTable.getUri(
+        String referenceNamespaceUri = originalNamespaceTable.get(
             reference.getReferenceTypeId().getNamespaceIndex()
         );
         String targetNamespaceUri = reference.getTargetNodeId().getNamespaceUri();
 
         if (targetNamespaceUri == null) {
-            targetNamespaceUri = originalNamespaceTable.getUri(
+            targetNamespaceUri = originalNamespaceTable.get(
                 reference.getTargetNodeId().getNamespaceIndex()
             );
         }
@@ -573,10 +581,10 @@ public final class UaNodeSetMerger {
             field.setDataType(newDataType.toParseableString());
         }
 
-        DataTypeDefinition innerDefinition = field.getDefinition();
-        if (innerDefinition != null) {
-            reindex(innerDefinition, aliasTable, currentNamespaceTable, originalNamespaceTable);
-        }
+//        DataTypeDefinition innerDefinition = field.;
+//        if (innerDefinition != null) {
+//            reindex(innerDefinition, aliasTable, currentNamespaceTable, originalNamespaceTable);
+//        }
     }
 
     /**
@@ -691,9 +699,9 @@ public final class UaNodeSetMerger {
     }
 
     /**
-     * A default {@link SerializationContext} that can be used to decode OPC UA built-in types.
+     * A default {@link  EncodingContext} that can be used to decode OPC UA built-in types.
      */
-    private static final SerializationContext SERIALIZATION_CONTEXT = new SerializationContext() {
+    private static final EncodingContext SERIALIZATION_CONTEXT = new EncodingContext() {
 
         private final NamespaceTable namespaceTable = new NamespaceTable();
 
@@ -708,10 +716,20 @@ public final class UaNodeSetMerger {
         }
 
         @Override
+        public ServerTable getServerTable() {
+            return new ServerTable();
+        }
+
+        @Override
         public DataTypeManager getDataTypeManager() {
             return OpcUaDataTypeManager.getInstance();
         }
-        
+
+        @Override
+        public EncodingManager getEncodingManager() {
+            return OpcUaEncodingManager.getInstance();
+        }
+
     };
 
 }

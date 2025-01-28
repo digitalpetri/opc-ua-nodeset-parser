@@ -1,9 +1,10 @@
 package com.digitalpetri.opcua.nodeset.attributes;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import javax.xml.bind.Marshaller;
+
 
 import com.digitalpetri.opcua.nodeset.util.AttributeUtil;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
@@ -16,6 +17,9 @@ import org.eclipse.milo.opcua.stack.core.types.enumerated.NodeClass;
 import org.opcfoundation.ua.generated.UAVariableType;
 
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
+
+import jakarta.xml.bind.Marshaller;
+
 
 public class VariableTypeNodeAttributes extends NodeAttributes {
 
@@ -104,7 +108,7 @@ public class VariableTypeNodeAttributes extends NodeAttributes {
             .orElse(new DataValue(Variant.NULL_VALUE));
         NodeId dataType = AttributeUtil.parseDataType(gNode.getDataType(), aliasMap);
         int valueRank = gNode.getValueRank();
-        UInteger[] arrayDimensions = AttributeUtil.parseArrayDimensions(gNode.getArrayDimensions());
+        UInteger[] arrayDimensions = AttributeUtil.parseArrayDimensions(Collections.singletonList(gNode.getArrayDimensions()));
         boolean isAbstract = gNode.isIsAbstract();
 
         return new VariableTypeNodeAttributes(

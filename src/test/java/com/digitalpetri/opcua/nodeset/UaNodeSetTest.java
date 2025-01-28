@@ -1,9 +1,13 @@
 package com.digitalpetri.opcua.nodeset;
 
 import java.io.InputStream;
-import javax.xml.bind.JAXBException;
+
+
 
 import org.junit.Test;
+
+import jakarta.xml.bind.JAXBException;
+
 
 public class UaNodeSetTest {
 

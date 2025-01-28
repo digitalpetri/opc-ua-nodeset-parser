@@ -5,9 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 
 import com.digitalpetri.opcua.nodeset.attributes.DataTypeNodeAttributes;
 import com.digitalpetri.opcua.nodeset.attributes.MethodNodeAttributes;
@@ -19,10 +16,11 @@ import com.digitalpetri.opcua.nodeset.attributes.VariableNodeAttributes;
 import com.digitalpetri.opcua.nodeset.attributes.VariableTypeNodeAttributes;
 import com.digitalpetri.opcua.nodeset.attributes.ViewNodeAttributes;
 import com.digitalpetri.opcua.nodeset.util.AttributeUtil;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
+
 import org.eclipse.milo.opcua.stack.core.NamespaceTable;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
+import org.eclipse.milo.shaded.com.google.common.collect.ArrayListMultimap;
+import org.eclipse.milo.shaded.com.google.common.collect.ListMultimap;
 import org.opcfoundation.ua.generated.AliasTable;
 import org.opcfoundation.ua.generated.DataTypeDefinition;
 import org.opcfoundation.ua.generated.NodeIdAlias;
@@ -37,6 +35,11 @@ import org.opcfoundation.ua.generated.UAReferenceType;
 import org.opcfoundation.ua.generated.UAVariable;
 import org.opcfoundation.ua.generated.UAVariableType;
 import org.opcfoundation.ua.generated.UAView;
+
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
+
 
 public class UaNodeSet {
 
@@ -93,7 +96,7 @@ public class UaNodeSet {
         // Namespace URI List
         if (nodeSet.getNamespaceUris() != null) {
             List<String> uris = nodeSet.getNamespaceUris().getUri();
-            uris.forEach(namespaceTable::addUri);
+            uris.forEach(namespaceTable::add);
         }
 
         // Reference Details
